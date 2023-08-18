@@ -374,17 +374,6 @@ defmodule Postgrex do
     end
   end
 
-  @doc """
-  Runs an (extended) query and returns the result or raises `Postgrex.Error` if
-  there was an error. See `query/3`.
-  """
-  @spec query!(conn, iodata, list, [execute_option]) :: Postgrex.Result.t()
-  def query!(conn, statement, params, opts \\ []) do
-    case query(conn, statement, params, opts) do
-      {:ok, result} -> result
-      {:error, err} -> raise err
-    end
-  end
 
   @doc """
   Prepares an (extended) query.
