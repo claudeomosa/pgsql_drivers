@@ -43,7 +43,7 @@ cd psycopg
 You can then make changes to the `main.py` file with your db credentials and a few queries to test.
 1. `cur.fetchall_as_json()` returns all records in the following format:
 
-```shell
+```python
 {
     "data": [
         {
@@ -69,7 +69,7 @@ You can then make changes to the `main.py` file with your db credentials and a f
 
 2. `cur.fetchone_as_json()` returns a single record as follows:
 
-```shell
+```python
 {
     "data": [
         {
@@ -83,7 +83,7 @@ You can then make changes to the `main.py` file with your db credentials and a f
 
 3. `cur.fetchmany_as_json(size=2)` returns 2 records as follows:
 
-```shell
+```python
 {
     "data": [
         {
