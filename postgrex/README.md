@@ -48,7 +48,7 @@ iex> {:ok, pid} = Postgrex.start_link(hostname: "localhost", username: "postgres
 
 ``` elixir
 
-iex> Postgrex.query(pid, "SELECT user_id, text FROM project_members", [])
+iex> Postgrex.query(pid, "SELECT project_id, user_id FROM project_members", [])
 
 {:ok,
  %{
