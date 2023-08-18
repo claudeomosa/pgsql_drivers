@@ -36,7 +36,7 @@ This version has updates that return data in a json format after a query rather 
 
 1. Make a connection to your database, update your credentials as required:
 
-```iex
+```elixir
 
 iex> {:ok, pid} = Postgrex.start_link(hostname: "localhost", username: "postgres", password: "postgres", database: "postgres")
 
