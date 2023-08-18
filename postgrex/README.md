@@ -32,7 +32,7 @@ To view how [Postgrex](https://github.com/elixir-ecto/postgrex) , PostgreSQL dri
 
 ### How this version works:
 
-This version has updates that return data in a json format after a query rather than the %Postgrex.Result{} struct that is returned when you use [Postgrex](https://github.com/elixir-ecto/postgrex). Steps:
+This version has updates that return data in a json format after a query rather than the `%Postgrex.Result{}` struct that is returned when you use [Postgrex](https://github.com/elixir-ecto/postgrex). Steps:
 
 1. Make a connection to your database, update your credentials as required:
 
