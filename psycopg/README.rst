@@ -1,75 +1,107 @@
-Psycopg 3 -- PostgreSQL database adapter for Python
+Psycopg 3
 ===================================================
 
-Psycopg 3 is a modern implementation of a PostgreSQL adapter for Python.
+[Psycopg](https://github.com/psycopg/psycopg) 3 is a modern implementation of a PostgreSQL adapter for Python. For installation, you can visit their [github](https://github.com/psycopg/psycopg) and their documentation can be found in their official [website](https://www.psycopg.org/psycopg3/). 
+This version has methods that return records in JSON format. 
 
 
-Installation
+Usage
 ------------
+change to this directory to work on the package's source code:
 
-Quick version::
-
-    pip install --upgrade pip               # upgrade pip to at least 20.3
-    pip install "psycopg[binary,pool]"      # install binary dependencies
-
-For further information about installation please check `the documentation`__.
-
-.. __: https://www.psycopg.org/psycopg3/docs/basic/install.html
-
-
-Hacking
--------
+```shell
+cd psycopg
+```
 
 In order to work on the Psycopg source code you need to have the ``libpq``
 PostgreSQL client library installed in the system. For instance, on Debian
 systems, you can obtain it by running::
 
-    sudo apt install libpq5
+```shell
+sudo apt install libpq5
+```
 
-After which you can clone this repository::
-
-    git clone https://github.com/psycopg/psycopg.git
-    cd psycopg
 
 Please note that the repository contains the source code of several Python
 packages: that's why you don't see a ``setup.py`` here. The packages may have
-different requirements:
+different requirements, in this version we will only be working with the ``psycopg`` directory which contains the pure python implementation. If you wish to work on ``psycopg_c`` directory containing an optimization module written in C/Cython or ``psycopg_pool`` directory containing the `connection pools` implementations, check [Psycopg](https://github.com/psycopg/psycopg) for instructions.
 
-- The ``psycopg`` directory contains the pure python implementation of
-  ``psycopg``. The package has only a runtime dependency on the ``libpq``, the
-  PostgreSQL client library, which should be installed in your system.
 
-- The ``psycopg_c`` directory contains an optimization module written in
-  C/Cython. In order to build it you will need a few development tools: please
-  look at `Local installation`__ in the docs for the details.
-
-  .. __: https://www.psycopg.org/psycopg3/docs/basic/install.html#local-installation
-
-- The ``psycopg_pool`` directory contains the `connection pools`__
-  implementations. This is kept as a separate package to allow a different
-  release cycle.
-
-  .. __: https://www.psycopg.org/psycopg3/docs/advanced/pool.html
-
-You can create a local virtualenv and install there the packages `in
-development mode`__, together with their development and testing
-requirements::
+You can create a local virtualenv and install there the packages::
 
     python -m venv .venv
     source .venv/bin/activate
     pip install -e "./psycopg[dev,test]"    # for the base Python package
-    pip install -e ./psycopg_pool           # for the connection pool
-    pip install ./psycopg_c                 # for the C speedup module
 
-.. __: https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs
 
-Please add ``--config-settings editable_mode=strict`` to the ``pip install
--e`` above if you experience `editable mode broken`__.
+Now change to the ``psycopg`` directory:
 
-.. __: https://github.com/pypa/setuptools/issues/3557
+```shell
+cd psycopg
+```
 
-Now hack away! You can run the tests using::
+You can then make changes to the `main.py` file with your db credentials and a few queries to test.
+1. `cur.fetchall_as_json()` returns all records in the following format:
 
-    psql -c 'create database psycopg_test'
-    export PSYCOPG_TEST_DSN="dbname=psycopg_test"
-    pytest
+```python
+{
+    "data": [
+        {
+            "project_id": 3,
+            "user_id": 2
+        },
+        {
+            "project_id": 3,
+            "user_id": 1
+        },
+        {
+            "project_id": 6,
+            "user_id": 3
+        },
+        {
+            "project_id": 4,
+            "user_id": 1
+        },
+    ],
+    "status_code": 200
+}
+```
+
+2. `cur.fetchone_as_json()` returns a single record as follows:
+
+```python
+{
+    "data": [
+        {
+            "project_id": 3,
+            "user_id": 2
+        }
+    ],
+    "status_code": 200
+}
+```
+
+3. `cur.fetchmany_as_json(size=2)` returns 2 records as follows:
+
+```python
+{
+    "data": [
+        {
+            "project_id": 3,
+            "user_id": 2
+        },
+        {
+            "project_id": 3,
+            "user_id": 1
+        }
+    ],
+    "status_code": 200
+}
+```
+
+
+You can run the following to build and create a wheel distribution of this package:
+
+```shell
+python setup.py bdist_wheel 
+```
