@@ -11,12 +11,14 @@ from typing import Optional, NoReturn, Sequence, Tuple, Type, TypeVar
 from typing import overload, TYPE_CHECKING
 from contextlib import contextmanager
 
+import json
+from typing import List, Any
 from . import pq
 from . import adapt
 from . import errors as e
 from .abc import ConnectionType, Query, Params, PQGen
 from .copy import Copy, Writer as CopyWriter
-from .rows import Row, RowMaker, RowFactory
+from .rows import Row, RowMaker, RowFactory, _get_names
 from ._column import Column
 from .pq.misc import connection_summary
 from ._queries import PostgresQuery, PostgresClientQuery
@@ -833,6 +835,75 @@ class Cursor(BaseCursor["Connection[Any]", Row]):
         records = self._tx.load_rows(self._pos, self.pgresult.ntuples, self._make_row)
         self._pos = self.pgresult.ntuples
         return records
+    
+    def fetchall_as_json(self) -> str:
+        """
+        Return all the remaining records from the current recordset as a JSON string.
+
+        :rtype: str
+        """
+        self._fetch_pipeline()
+        self._check_result_for_fetch()
+        assert self.pgresult
+        records = self._tx.load_rows(self._pos, self.pgresult.ntuples, self._make_row)
+        self._pos = self.pgresult.ntuples
+
+        names = _get_names(self)
+
+        data = []
+        for record in records:
+            record_dict = {names[i]: value for i, value in enumerate(record)}
+            data.append(record_dict)
+
+        records_as_json = {"status_code": 200, "data": data}
+        return json.dumps(records_as_json, indent=4, sort_keys=True, default=str)
+    
+    def fetchone_as_json(self) -> str:
+        """
+        Return the next record from the current recordset as a JSON string.
+        
+        :rtype: str
+        """
+        self._fetch_pipeline()
+        self._check_result_for_fetch()
+        record = self._tx.load_row(self._pos, self._make_row)
+        if record is not None:
+            self._pos += 1
+
+        names = _get_names(self)
+
+        record_dict = {names[i]: value for i, value in enumerate(record)}
+        record_as_json = {"status_code": 200, "data": record_dict}
+        return json.dumps(record_as_json, indent=4, sort_keys=True, default=str)
+    
+    def fetchmany_as_json(self, size: int = 0) -> str:
+        """
+        Return the next `!size` records from the current recordset as a JSON string.
+
+        `!size` default to `!self.arraysize` if not specified.
+        """
+        self._fetch_pipeline()
+        self._check_result_for_fetch()
+        assert self.pgresult
+
+        if not size:
+            size = self.arraysize
+        records = self._tx.load_rows(
+            self._pos,
+            min(self._pos + size, self.pgresult.ntuples),
+            self._make_row,
+        )
+        self._pos += len(records)
+
+        names = _get_names(self)
+
+        data = []
+        for record in records:
+            record_dict = {names[i]: value for i, value in enumerate(record)}
+            data.append(record_dict)
+
+        records_as_json = {"status_code": 200, "data": data}
+        return json.dumps(records_as_json, indent=4, sort_keys=True, default=str)
 
     def __iter__(self) -> Iterator[Row]:
         self._fetch_pipeline()
