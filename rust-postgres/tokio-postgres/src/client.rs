@@ -256,6 +256,52 @@ impl Client {
             .await
     }
 
+    /// Executes a statement, returning a stream of the resulting rows in JSON format.
+    /// The stream is returned as a `Stream` of `Result`s, where each `Result` is a `JsonRow`.
+    /// The `JsonRow` type is a wrapper around `serde_json::Value`, and can be converted into
+    /// a `serde_json::Value` using `JsonRow::into_value`.
+    /// 
+    /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+    /// provided, 1-indexed.
+    /// 
+    /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+    /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+    /// with the `prepare` method.
+    pub async fn query_json<T>(
+        &self,
+        statement: &T,
+        params: &[&(dyn ToSql + Sync)],
+    ) -> Result<JsonRow, Error>
+    where
+        T: ?Sized + ToStatement,
+    {
+        let rows = self.query_raw(statement, slice_iter(params))
+            .await?
+            .try_collect::<Row>()
+            .await?;
+    
+        let mut json_row = JsonRow::new();
+    
+        for row in rows {
+            for (i, column) in row.columns().iter().enumerate() {
+                let column_name = column.name();
+                let column_value: Option<serde_json::Value> = match row.try_get(i) {
+                    Ok(value) => FromSql::<Json<serde_json::Value>>::from_sql(
+                        &Json::<serde_json::Value>::OID,
+                        &*value,
+                    )
+                    .ok(),
+                    Err(_) => None,
+                };
+                if let Some(value) = column_value {
+                    json_row.add_field(column_name, value);
+                }
+            }
+        }
+    
+        Ok(json_row)
+    }
+
     /// Executes a statement which returns a single row, returning it.
     ///
     /// Returns an error if the query does not return exactly one row.

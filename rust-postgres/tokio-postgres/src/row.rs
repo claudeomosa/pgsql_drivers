@@ -11,6 +11,7 @@ use std::fmt;
 use std::ops::Range;
 use std::str;
 use std::sync::Arc;
+use serde_json::Value as JsonValue;
 
 mod sealed {
     pub trait Sealed {}
@@ -192,6 +193,23 @@ impl Row {
 impl AsName for SimpleColumn {
     fn as_name(&self) -> &str {
         self.name()
+    }
+}
+
+/// A row of data returned from the database by a query in JSON format.
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+struct JsonRow {
+    data: Vec<JsonValue>,
+}
+
+impl JsonRow {
+    fn new() -> Self {
+        JsonRow { data: Vec::new() }
+    }
+
+    fn add_field(&mut self, name: &str, value: JsonValue) {
+        self.data.push(json!({ name: value }));
     }
 }
 
