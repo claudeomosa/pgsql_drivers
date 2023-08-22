@@ -901,7 +901,7 @@ func (cn *conn) query(query string, args []driver.Value) (_ *rows, err error) {
 	// Check to see if we can use the "simpleQuery" interface, which is
 	// *much* faster than going through prepare/exec
 	if len(args) == 0 {
-		return cn.simpleQuery(query)
+		return cn.simpleQueryJSON(query)
 	}
 
 	if cn.binaryParameters {
@@ -933,7 +933,7 @@ func (cn *conn) Exec(query string, args []driver.Value) (res driver.Result, err 
 	// *much* faster than going through prepare/exec
 	if len(args) == 0 {
 		// ignore commandTag, our caller doesn't care
-		r, _, err := cn.simpleExec(query)
+		r, _, err := cn.simpleExecJSON(query)
 		return r, err
 	}
 
@@ -956,6 +956,31 @@ func (cn *conn) Exec(query string, args []driver.Value) (res driver.Result, err 
 		panic(err)
 	}
 	return r, err
+}
+
+// performs a simple query and returns JSON
+func (cn *conn) simpleQueryJSON(query string) (_ driver.Rows, err error) {
+	rows, err := cn.simpleQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	return &JSONRows{rows: rows}, nil
+}
+
+func (cn *conn) simpleExecJSON(query string) (_ driver.Result, err error) {
+	result, _, err := cn.simpleExec(query)
+	if err != nil {
+		return nil, err
+	}
+	return &JSONResult{result: result}, nil
+}
+
+type JSONRows struct {
+	rows driver.Rows
+}
+
+type JSONResult struct {
+	result driver.Result
 }
 
 type safeRetryError struct {
