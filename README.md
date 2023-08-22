@@ -8,3 +8,6 @@ This repository hosts updated PostgreSQL drivers for various programming languag
 4. ``pq`` for the Go programming language.
 
 To use/test any of the updated drivers, clone this repository with the following command and change into the directory of the drive you would like to use. Each directory has a README.md file containing instructions.
+```shell
+git clone https://github.com/claudeomosa/pgsql_drivers.git
+```
