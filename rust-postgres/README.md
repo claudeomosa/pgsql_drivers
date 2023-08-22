@@ -1,46 +1,32 @@
-# Rust-Postgres
 
-PostgreSQL support for Rust.
+# Rust PostgreSQL Driver with JSON Query Results
 
-## postgres [![Latest Version](https://img.shields.io/crates/v/postgres.svg)](https://crates.io/crates/postgres)
+This project demonstrates how to modify the PostgreSQL driver source code to implement a `query_json` method, which returns query results in JSON format. The modifications are made to the PostgreSQL driver's existing methods.
 
-[Documentation](https://docs.rs/postgres)
 
-A native, synchronous PostgreSQL client.
+The PostgreSQL driver typically provides methods like `query` and `execute` for interacting with the database. However, we wanted to add a new method `query_json` that returns query results in JSON format, as specified by the user.
 
-## tokio-postgres [![Latest Version](https://img.shields.io/crates/v/tokio-postgres.svg)](https://crates.io/crates/tokio-postgres)
+We've added a new method `query_json` to the PostgreSQL driver, which takes a query and parameters, similar to other query methods. It then processes the query results, extracts column values, and constructs JSON objects for each row. Finally, the JSON objects are serialized into a JSON array and returned as a string.
 
-[Documentation](https://docs.rs/tokio-postgres)
+## Usage
 
-A native, asynchronous PostgreSQL client.
+To use the modified driver with the new `query_json` method:
 
-## postgres-types [![Latest Version](https://img.shields.io/crates/v/postgres-types.svg)](https://crates.io/crates/postgres-types)
+In your Rust code 
+```rust
+use postgres::{Client, NoTls};
 
-[Documentation](https://docs.rs/postgres-types)
+# fn main() -> Result<(), postgres::Error> {
+let mut client = Client::connect("host=localhost user=postgres", NoTls)?;
 
-Conversions between Rust and Postgres types.
-
-## postgres-native-tls [![Latest Version](https://img.shields.io/crates/v/postgres-native-tls.svg)](https://crates.io/crates/postgres-native-tls)
-
-[Documentation](https://docs.rs/postgres-native-tls)
-
-TLS support for postgres and tokio-postgres via native-tls.
-
-## postgres-openssl [![Latest Version](https://img.shields.io/crates/v/postgres-openssl.svg)](https://crates.io/crates/postgres-openssl)
-
-[Documentation](https://docs.rs/postgres-openssl)
-
-TLS support for postgres and tokio-postgres via openssl.
-
-# Running test suite
-
-The test suite requires postgres to be running in the correct configuration. The easiest way to do this is with docker:
-
-1. Install `docker` and `docker-compose`.
-   1. On ubuntu: `sudo apt install docker.io docker-compose`.
-1. Make sure your user has permissions for docker.
-   1. On ubuntu: ``sudo usermod -aG docker $USER``
-1. Change to top-level directory of `rust-postgres` repo.
-1. Run `docker-compose up -d`.
-1. Run `cargo test`.
-1. Run `docker-compose stop`.
+let baz = true;
+for json_row in client.query_json("SELECT foo FROM bar WHERE baz = $1", &[&baz])? {
+    // Access specific fields within the JSON row
+    if let Some(foo_value) = json_row.get("foo") {
+        let foo: i32 = serde_json::from_value(foo_value.clone())?;
+        println!("foo: {}", foo);
+    }
+}
+# Ok(())
+# }
+```
